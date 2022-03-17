@@ -3,6 +3,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Formatter;
@@ -25,12 +26,9 @@ public class External_Sorting {
         int[] leftArray = new int[midPoint];
         int[] rightArray = new int[arrayLength - midPoint];
 
-        for (int i = 0; i < midPoint; i++) {
-            leftArray[i] = inputArray[i];
-        }
-        for (int i = midPoint; i < arrayLength; i++) {
-            rightArray[i - midPoint] = inputArray[i];
-        }
+        System.arraycopy(inputArray, 0, leftArray, 0, midPoint);
+        if (arrayLength - midPoint >= 0)
+            System.arraycopy(inputArray, midPoint, rightArray, 0, arrayLength - midPoint);
 
         mergeSort(leftArray);
         mergeSort(rightArray);
@@ -72,15 +70,15 @@ public class External_Sorting {
     }
 
     /**
-     * @param file       the file to read
+     * @param path       the file to read
      * @param offset     the offset to start reading from
      * @param memory_cap the number of lines to read (Simulate Hard-limit Memory Capacity)
      * @return the lines of the file
      */
-    public static List<String> readFileIntoList(String file, int offset, int memory_cap) {
+    public static List<String> readFileIntoList(Path path, int offset, int memory_cap) {
         List<String> lines = Collections.emptyList();
         try {
-            lines = Files.newBufferedReader(Paths.get(file), StandardCharsets.UTF_8).lines().skip((long) offset * memory_cap).limit(memory_cap).collect(Collectors.toList());
+            lines = Files.newBufferedReader(path, StandardCharsets.UTF_8).lines().skip((long) offset * memory_cap).limit(memory_cap).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,7 +96,7 @@ public class External_Sorting {
         System.out.println("Memory capacity: " + memory_cap);
 
         // Generate random numbers with quantity num_ways x memory_cap in Reverse Order
-        try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("input.txt")))) {
+        try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("data", "input.txt")))) {
             IntStream.range(0, num_ways * memory_cap).boxed().sorted(Collections.reverseOrder()).forEach(i -> formatter.format("%d%n", i + 1));
         } catch (IOException e) {
             e.printStackTrace();
@@ -106,7 +104,7 @@ public class External_Sorting {
 
         for (int offset = 0; offset < num_ways; offset++) {
             // Read file into list of integers
-            List<Integer> lines = readFileIntoList("input.txt", offset, memory_cap).stream().map(Integer::parseInt).collect(Collectors.toList());
+            List<Integer> lines = readFileIntoList(Paths.get("data", "input.txt"), offset, memory_cap).stream().map(Integer::parseInt).collect(Collectors.toList());
             System.out.println("Input file: " + lines.size());
 
             // Sort the list of integers
@@ -114,7 +112,7 @@ public class External_Sorting {
             mergeSort(inputArray);
 
             // Write sorted list to file
-            try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("output.txt")))) {
+            try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("data", String.format("output_%d.txt", offset))))) {
                 IntStream.range(0, inputArray.length).forEach(i -> formatter.format("%d%n", inputArray[i]));
             } catch (IOException e) {
                 e.printStackTrace();
