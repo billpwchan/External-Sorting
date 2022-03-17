@@ -1,18 +1,17 @@
 import io.github.cdimascio.dotenv.Dotenv;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Formatter;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class External_Sorting {
+public class ExternalSorting {
 
 
     private static void mergeSort(int[] inputArray) {
@@ -85,8 +84,50 @@ public class External_Sorting {
         return lines;
     }
 
+    public static void mergeFiles(Path path, int memory_cap, int num_ways, int total_length) throws IOException {
+        // num_ways portions for input sorted files + 1 portion for output file
+        int portion_size = memory_cap / (num_ways + 1);
 
-    public static void main(String[] args) {
+        int[] top_nums = new int[num_ways];
+        BufferedReader[] br_arr = new BufferedReader[num_ways];
+
+        for (int i = 0; i < num_ways; i++) {
+            try {
+                br_arr[i] = new BufferedReader(new FileReader(String.format("data/output_%d.txt", i + 1)));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        MinHeapNode[] heap_arr = new MinHeapNode[num_ways];
+        for (int i = 0; i < num_ways; i++) {
+            MinHeapNode node = new MinHeapNode(Integer.parseInt(br_arr[i].readLine()), i, 1);
+            heap_arr[i] = node;
+        }
+
+        // MinHeap Initialization
+        MinHeap mh = new MinHeap(heap_arr, num_ways);
+
+        // TODO: SAVE BY PORTION SIZE
+        int[] result = new int[total_length];
+
+        for (int i = 0; i < total_length; i++) {
+
+            // Extract the top element
+            MinHeapNode root = mh.getMin();
+            result[i] = root.element;
+
+            // Add next element of this array to min heap by reading from the BufferedReader
+            String line = br_arr[root.i].readLine();
+            root.element = line != null ? Integer.parseInt(line) : Integer.MAX_VALUE;
+
+            mh.replaceMin(root);
+        }
+        System.out.println(Arrays.toString(result));
+
+    }
+
+    public static void main(String[] args) throws IOException {
         // Initialize variables for simulating external sorting scenario
         Dotenv dotenv = Dotenv.load();
         int num_ways = Integer.parseInt(Objects.requireNonNull(dotenv.get("NUM_WAYS")));
@@ -102,23 +143,29 @@ public class External_Sorting {
             e.printStackTrace();
         }
 
+        int total_lines = 0;
+
         for (int offset = 0; offset < num_ways; offset++) {
             // Read file into list of integers
             List<Integer> lines = readFileIntoList(Paths.get("data", "input.txt"), offset, memory_cap).stream().map(Integer::parseInt).collect(Collectors.toList());
             System.out.println("Input file: " + lines.size());
+            total_lines += lines.size();
 
             // Sort the list of integers
             int[] inputArray = lines.stream().mapToInt(Integer::intValue).toArray();
             mergeSort(inputArray);
 
             // Write sorted list to file
-            try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("data", String.format("output_%d.txt", offset))))) {
+            try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("data", String.format("output_%d.txt", offset + 1))))) {
                 IntStream.range(0, inputArray.length).forEach(i -> formatter.format("%d%n", inputArray[i]));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
+            System.gc();
         }
+
+
+        mergeFiles(Paths.get("data", "output.txt"), memory_cap, num_ways, total_lines);
 
 
     }
