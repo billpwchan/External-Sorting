@@ -71,10 +71,16 @@ public class External_Sorting {
 
     }
 
-    public static List<String> readFileIntoList(String file) {
+    /**
+     * @param file       the file to read
+     * @param offset     the offset to start reading from
+     * @param memory_cap the number of lines to read (Simulate Hard-limit Memory Capacity)
+     * @return the lines of the file
+     */
+    public static List<String> readFileIntoList(String file, int offset, int memory_cap) {
         List<String> lines = Collections.emptyList();
         try {
-            lines = Files.readAllLines(Paths.get(file), StandardCharsets.UTF_8);
+            lines = Files.newBufferedReader(Paths.get(file), StandardCharsets.UTF_8).lines().skip((long) offset * memory_cap).limit(memory_cap).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -93,25 +99,29 @@ public class External_Sorting {
 
         // Generate random numbers with quantity num_ways x memory_cap in Reverse Order
         try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("input.txt")))) {
-            IntStream.range(0, memory_cap).boxed().sorted(Collections.reverseOrder()).forEach(i -> formatter.format("%d%n", i + 1));
+            IntStream.range(0, num_ways * memory_cap).boxed().sorted(Collections.reverseOrder()).forEach(i -> formatter.format("%d%n", i + 1));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // Read file into list of integers
-        List<Integer> lines = readFileIntoList("input.txt").stream().map(Integer::parseInt).collect(Collectors.toList());
-        System.out.println("Input file: " + lines.size());
+        for (int offset = 0; offset < num_ways; offset++) {
+            // Read file into list of integers
+            List<Integer> lines = readFileIntoList("input.txt", offset, memory_cap).stream().map(Integer::parseInt).collect(Collectors.toList());
+            System.out.println("Input file: " + lines.size());
 
-        // Sort the list of integers
-        int[] inputArray = lines.stream().mapToInt(Integer::intValue).toArray();
-        mergeSort(inputArray);
+            // Sort the list of integers
+            int[] inputArray = lines.stream().mapToInt(Integer::intValue).toArray();
+            mergeSort(inputArray);
 
-        // Write sorted list to file
-        try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("output.txt")))) {
-            IntStream.range(0, inputArray.length).forEach(i -> formatter.format("%d%n", inputArray[i]));
-        } catch (IOException e) {
-            e.printStackTrace();
+            // Write sorted list to file
+            try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("output.txt")))) {
+                IntStream.range(0, inputArray.length).forEach(i -> formatter.format("%d%n", inputArray[i]));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
+
 
     }
 }
