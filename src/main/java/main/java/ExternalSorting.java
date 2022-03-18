@@ -90,12 +90,13 @@ public class ExternalSorting {
             }
         }
         Files.write(output_path, Arrays.stream(result).filter(num -> num != Integer.MAX_VALUE).mapToObj(String::valueOf).collect(Collectors.toList()), StandardOpenOption.APPEND);
+        System.out.println(Arrays.toString(result));
 
         // close br_arr
         for (BufferedReader br : br_arr) {
             br.close();
         }
-        System.out.println("Merge Done! File saved to: " + output_path.toString());
+        System.out.println("Merge Done! File saved to: " + output_path);
     }
 
     /**
@@ -126,7 +127,7 @@ public class ExternalSorting {
         if (args.length == 2) {
             total_lines = Integer.parseInt(args[0]);
             memory_cap = Integer.parseInt(args[1]);
-            assert memory_cap > 0 && total_lines >= memory_cap;
+            assert memory_cap > 0 && total_lines > 0;
         }
 
 
@@ -154,7 +155,7 @@ public class ExternalSorting {
             MergeSort.mergeSort(inputArray);
 
             // Write sorted list to file
-            try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("data", String.format("output_%d.txt", offset + 1))))) {
+            try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("data", String.format(total_lines >= memory_cap ? "output_%d.txt" : "output.txt", offset + 1))))) {
                 IntStream.range(0, inputArray.length).forEach(i -> formatter.format("%d%n", inputArray[i]));
             } catch (IOException e) {
                 e.printStackTrace();
@@ -162,8 +163,11 @@ public class ExternalSorting {
             System.gc();
         }
 
-        mergeFiles(Paths.get("data", "output.txt"), memory_cap, num_ways, total_lines);
-        removeTempFiles(Paths.get("data"));
+        if (total_lines >= memory_cap) {
+            mergeFiles(Paths.get("data", "output.txt"), memory_cap, num_ways, total_lines);
+            removeTempFiles(Paths.get("data"));
+        }
+
 
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;

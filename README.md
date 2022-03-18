@@ -10,9 +10,9 @@
 
 </div>
 
-## Deployment
+## Preparation
 
-### Pre-Requisite: Environment Variables (.inv)
+### Pre-Requisite: Environment Variables (`config.properties`)
 
 ```dotenv
 TOTAL_LINES=100000     # Total number of lines to sort
@@ -21,7 +21,7 @@ MEMORY_CAP=1000         # Memory cap in lines
 
 **IMPORTANT NOTE:** This is to simulate that the memory can only contain `MEMORY_CAP` lines at a time.
 
-### Pre-Requisite: External Sorting Assumptions
+### External Sorting Assumptions
 
 1. The input file is in the format of one integer per Line
 2. Memory Capacity is greater than the number of partitions (i.e., TOTAL_LINES / MEMORY_CAP)
