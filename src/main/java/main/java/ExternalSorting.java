@@ -1,7 +1,5 @@
 package main.java;
 
-import io.github.cdimascio.dotenv.Dotenv;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -63,6 +61,7 @@ public class ExternalSorting {
         MinHeap mh = new MinHeap(heap_arr, num_ways);
 
         int[] result = new int[portion_size];
+        Arrays.fill(result, Integer.MAX_VALUE);
         int partition_index = 0;
 
         for (int i = 0; i < total_length; i++) {
@@ -81,12 +80,16 @@ public class ExternalSorting {
                 partition_index = 0;
                 Files.write(output_path, Arrays.stream(result).filter(num -> num != Integer.MAX_VALUE).mapToObj(String::valueOf).collect(Collectors.toList()), StandardOpenOption.APPEND);
                 result = new int[portion_size];
+                Arrays.fill(result, Integer.MAX_VALUE);
             }
         }
+        Files.write(output_path, Arrays.stream(result).filter(num -> num != Integer.MAX_VALUE).mapToObj(String::valueOf).collect(Collectors.toList()), StandardOpenOption.APPEND);
+
         // close br_arr
         for (BufferedReader br : br_arr) {
             br.close();
         }
+        System.out.println("Merge Done! File saved to: " + output_path.toString());
     }
 
     public static void removeTempFiles(Path path, int num_ways) {
@@ -100,11 +103,26 @@ public class ExternalSorting {
     }
 
     public static void main(String[] args) throws IOException {
+        long startTime = System.nanoTime();
+        // Create Data Folders for storing Input & Output
+        Files.createDirectories(Paths.get("data"));
+
+
         // Initialize variables for simulating external sorting scenario
-        Dotenv dotenv = Dotenv.load();
-        int total_lines = Integer.parseInt(Objects.requireNonNull(dotenv.get("TOTAL_LINES")));
-        int memory_cap = Integer.parseInt(Objects.requireNonNull(dotenv.get("MEMORY_CAP")));
-        int num_ways = Math.floorDiv(total_lines, memory_cap);
+        Properties prop = new Properties();
+        prop.load(ExternalSorting.class.getClassLoader().getResourceAsStream("config.properties"));
+        int total_lines = Integer.parseInt(Objects.requireNonNull(prop.getProperty("TOTAL_LINES")));
+        int memory_cap = Integer.parseInt(Objects.requireNonNull(prop.getProperty("MEMORY_CAP")));
+
+        if (args.length == 2) {
+            total_lines = Integer.parseInt(args[0]);
+            memory_cap = Integer.parseInt(args[1]);
+            assert memory_cap > 0 && total_lines >= memory_cap;
+        }
+
+
+        // If total_lines >= memory_cap, use external sorting. Else we can just use MergeSort to sort the input file
+        int num_ways = total_lines >= memory_cap ? Math.floorDiv(total_lines, memory_cap) : 1;
 
         System.out.println("Total Lines: " + total_lines);
         System.out.println("Memory capacity: " + memory_cap);
@@ -137,5 +155,9 @@ public class ExternalSorting {
 
         mergeFiles(Paths.get("data", "output.txt"), memory_cap, num_ways, total_lines);
         removeTempFiles(Paths.get("data"), num_ways);
+
+        long endTime = System.nanoTime();
+        long totalTime = endTime - startTime;
+        System.out.println("Total Time: " + totalTime / 1000000000.0 + " seconds");
     }
 }

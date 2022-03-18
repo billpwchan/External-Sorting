@@ -15,18 +15,19 @@
 ### Pre-Requisite: Environment Variables (.inv)
 
 ```dotenv
-TOTAL_LINES=1000000     # Total number of lines to sort
-MEMORY_CAP=9999         # Memory cap in lines
+TOTAL_LINES=100000     # Total number of lines to sort
+MEMORY_CAP=1000         # Memory cap in lines
 ```
 
 **IMPORTANT NOTE:** This is to simulate that the memory can only contain `MEMORY_CAP` lines at a time.
 
 ### Pre-Requisite: External Sorting Assumptions
 
-1. The input file is in the format of One integer per Line
+1. The input file is in the format of one integer per Line
 2. Memory Capacity is greater than the number of partitions (i.e., TOTAL_LINES / MEMORY_CAP)
+3. All numbers are within the range of -2,147,483,648 to 2,147,483,647 (i.e.,Int range in Java)
 
-### 1. Install Dependencies
+### Idea
 
 Install using [conda](https://docs.conda.io/en/latest/):
 
