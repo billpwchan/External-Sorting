@@ -29,10 +29,16 @@ public class ExternalSorting {
         return lines;
     }
 
+    /**
+     * @param output_path  the path to write output file data/output.txt
+     * @param memory_cap   the number of lines to read (Simulate Hard-limit Memory Capacity)
+     * @param num_ways     the number of ways to split the data
+     * @param total_length the total length of the data
+     * @throws IOException if the file cannot be written
+     */
     public static void mergeFiles(Path output_path, int memory_cap, int num_ways, int total_length) throws IOException {
         // Create Output File if not exist, or empty the content
-        if (!Files.exists(output_path, LinkOption.NOFOLLOW_LINKS))
-            Files.createFile(output_path);
+        if (!Files.exists(output_path, LinkOption.NOFOLLOW_LINKS)) Files.createFile(output_path);
         else {
             FileChannel.open(output_path, StandardOpenOption.WRITE).truncate(0).close();
         }
@@ -92,7 +98,10 @@ public class ExternalSorting {
         System.out.println("Merge Done! File saved to: " + output_path.toString());
     }
 
-    public static void removeTempFiles(Path path, int num_ways) {
+    /**
+     * @param path the path to read data/
+     */
+    public static void removeTempFiles(Path path) {
         // Remove Temporary Output Files
         final File downloadDirectory = new File(path.toString());
         final File[] files = downloadDirectory.listFiles((dir, name) -> name.matches("output_\\d+.txt"));
@@ -154,7 +163,7 @@ public class ExternalSorting {
         }
 
         mergeFiles(Paths.get("data", "output.txt"), memory_cap, num_ways, total_lines);
-        removeTempFiles(Paths.get("data"), num_ways);
+        removeTempFiles(Paths.get("data"));
 
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;

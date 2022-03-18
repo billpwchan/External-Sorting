@@ -1,6 +1,9 @@
 package main.java;
 
 public class MergeSort {
+    /**
+     * @param inputArray - array to be sorted
+     */
     static void mergeSort(int[] inputArray) {
         int arrayLength = inputArray.length;
 
@@ -13,8 +16,7 @@ public class MergeSort {
         int[] rightArray = new int[arrayLength - midPoint];
 
         System.arraycopy(inputArray, 0, leftArray, 0, midPoint);
-        if (arrayLength - midPoint >= 0)
-            System.arraycopy(inputArray, midPoint, rightArray, 0, arrayLength - midPoint);
+        if (arrayLength - midPoint >= 0) System.arraycopy(inputArray, midPoint, rightArray, 0, arrayLength - midPoint);
 
         mergeSort(leftArray);
         mergeSort(rightArray);
@@ -22,6 +24,11 @@ public class MergeSort {
         merge(inputArray, leftArray, rightArray);
     }
 
+    /**
+     * @param inputArray - array to be sorted
+     * @param leftArray  - left array
+     * @param rightArray - right array
+     */
     static void merge(int[] inputArray, int[] leftArray, int[] rightArray) {
         int leftArrayLength = leftArray.length;
         int rightArrayLength = rightArray.length;

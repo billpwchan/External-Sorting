@@ -9,6 +9,11 @@ class MinHeapNode {
     // Index of the Next Element
     int j;
 
+    /**
+     * @param element The value of the node
+     * @param i       Array Index
+     * @param j       Index of the Next Element
+     */
     public MinHeapNode(int element, int i, int j) {
         this.element = element;
         this.i = i;
@@ -31,14 +36,15 @@ class MinHeap {
         }
     }
 
+    /**
+     * @param i Index of the node
+     */
     void MinHeapify(int i) {
         int l = left(i);
         int r = right(i);
         int smallest = i;
-        if (l < heap_size && heap_arr[l].element < heap_arr[i].element)
-            smallest = l;
-        if (r < heap_size && heap_arr[r].element < heap_arr[smallest].element)
-            smallest = r;
+        if (l < heap_size && heap_arr[l].element < heap_arr[i].element) smallest = l;
+        if (r < heap_size && heap_arr[r].element < heap_arr[smallest].element) smallest = r;
         if (smallest != i) {
             swap(heap_arr, i, smallest);
             MinHeapify(smallest);
@@ -53,7 +59,9 @@ class MinHeap {
         return (2 * i + 2);
     }
 
-    // Function to return the minimum element from heap
+    /**
+     * @return The minimum element of the heap
+     */
     MinHeapNode getMin() {
         if (heap_size <= 0) {
             System.out.println("Heap underflow");
@@ -62,13 +70,19 @@ class MinHeap {
         return heap_arr[0];
     }
 
-    // Replace root with new node
+    /**
+     * @param root The root of the heap
+     */
     void replaceMin(MinHeapNode root) {
         heap_arr[0] = root;
         MinHeapify(0);
     }
 
-    // A utility function to swap two min heap nodes
+    /**
+     * @param arr The array to be sorted
+     * @param i   The index of the node
+     * @param j   The index of the next element
+     */
     void swap(MinHeapNode[] arr, int i, int j) {
         MinHeapNode temp = arr[i];
         arr[i] = arr[j];
