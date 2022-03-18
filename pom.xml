@@ -7,6 +7,23 @@
     <groupId>org.billpwchan</groupId>
     <artifactId>External_Sorting</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>main.java.ExternalSorting</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>io.github.cdimascio</groupId>
@@ -14,6 +31,7 @@
             <version>5.2.2</version>
         </dependency>
     </dependencies>
+
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>

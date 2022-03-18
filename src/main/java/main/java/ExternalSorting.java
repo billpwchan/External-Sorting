@@ -1,72 +1,19 @@
+package main.java;
+
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ExternalSorting {
-
-
-    private static void mergeSort(int[] inputArray) {
-        int arrayLength = inputArray.length;
-
-        if (arrayLength < 2) {
-            return;
-        }
-
-        int midPoint = arrayLength / 2;
-        int[] leftArray = new int[midPoint];
-        int[] rightArray = new int[arrayLength - midPoint];
-
-        System.arraycopy(inputArray, 0, leftArray, 0, midPoint);
-        if (arrayLength - midPoint >= 0)
-            System.arraycopy(inputArray, midPoint, rightArray, 0, arrayLength - midPoint);
-
-        mergeSort(leftArray);
-        mergeSort(rightArray);
-
-        merge(inputArray, leftArray, rightArray);
-    }
-
-    private static void merge(int[] inputArray, int[] leftArray, int[] rightArray) {
-        int leftArrayLength = leftArray.length;
-        int rightArrayLength = rightArray.length;
-
-        int x = 0;
-        int y = 0;
-        int z = 0;
-
-        while (x < leftArrayLength && y < rightArrayLength) {
-            if (leftArray[x] <= rightArray[y]) {
-                inputArray[z] = leftArray[x];
-                x++;
-            } else {
-                inputArray[z] = rightArray[y];
-                y++;
-            }
-            z++;
-        }
-
-        while (x < leftArrayLength) {
-            inputArray[z] = leftArray[x];
-            x++;
-            z++;
-        }
-
-        while (y < rightArrayLength) {
-            inputArray[z] = rightArray[y];
-            y++;
-            z++;
-        }
-
-    }
 
     /**
      * @param path       the file to read
@@ -84,7 +31,14 @@ public class ExternalSorting {
         return lines;
     }
 
-    public static void mergeFiles(Path path, int memory_cap, int num_ways, int total_length) throws IOException {
+    public static void mergeFiles(Path output_path, int memory_cap, int num_ways, int total_length) throws IOException {
+        // Create Output File if not exist, or empty the content
+        if (!Files.exists(output_path, LinkOption.NOFOLLOW_LINKS))
+            Files.createFile(output_path);
+        else {
+            FileChannel.open(output_path, StandardOpenOption.WRITE).truncate(0).close();
+        }
+
         // num_ways portions for input sorted files + 1 portion for output file
         int portion_size = memory_cap / (num_ways + 1);
 
@@ -108,52 +62,69 @@ public class ExternalSorting {
         // MinHeap Initialization
         MinHeap mh = new MinHeap(heap_arr, num_ways);
 
-        // TODO: SAVE BY PORTION SIZE
-        int[] result = new int[total_length];
+        int[] result = new int[portion_size];
+        int partition_index = 0;
 
         for (int i = 0; i < total_length; i++) {
 
             // Extract the top element
             MinHeapNode root = mh.getMin();
-            result[i] = root.element;
+            result[partition_index++] = root.element;
 
             // Add next element of this array to min heap by reading from the BufferedReader
             String line = br_arr[root.i].readLine();
             root.element = line != null ? Integer.parseInt(line) : Integer.MAX_VALUE;
 
             mh.replaceMin(root);
-        }
-        System.out.println(Arrays.toString(result));
 
+            if (partition_index == portion_size) {
+                partition_index = 0;
+                Files.write(output_path, Arrays.stream(result).filter(num -> num != Integer.MAX_VALUE).mapToObj(String::valueOf).collect(Collectors.toList()), StandardOpenOption.APPEND);
+                result = new int[portion_size];
+            }
+        }
+        // close br_arr
+        for (BufferedReader br : br_arr) {
+            br.close();
+        }
+    }
+
+    public static void removeTempFiles(Path path, int num_ways) {
+        // Remove Temporary Output Files
+        final File downloadDirectory = new File(path.toString());
+        final File[] files = downloadDirectory.listFiles((dir, name) -> name.matches("output_\\d+.txt"));
+        assert files != null;
+        for (File file : files) {
+            file.delete();
+        }
     }
 
     public static void main(String[] args) throws IOException {
         // Initialize variables for simulating external sorting scenario
         Dotenv dotenv = Dotenv.load();
-        int num_ways = Integer.parseInt(Objects.requireNonNull(dotenv.get("NUM_WAYS")));
+        int total_lines = Integer.parseInt(Objects.requireNonNull(dotenv.get("TOTAL_LINES")));
         int memory_cap = Integer.parseInt(Objects.requireNonNull(dotenv.get("MEMORY_CAP")));
+        int num_ways = Math.floorDiv(total_lines, memory_cap);
 
-        System.out.println("Number of ways: " + num_ways);
+        System.out.println("Total Lines: " + total_lines);
         System.out.println("Memory capacity: " + memory_cap);
+        System.out.println("Number of ways: " + num_ways);
 
         // Generate random numbers with quantity num_ways x memory_cap in Reverse Order
         try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("data", "input.txt")))) {
-            IntStream.range(0, num_ways * memory_cap).boxed().sorted(Collections.reverseOrder()).forEach(i -> formatter.format("%d%n", i + 1));
+            IntStream.range(0, total_lines).boxed().sorted(Collections.reverseOrder()).forEach(i -> formatter.format("%d%n", i + 1));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        int total_lines = 0;
 
         for (int offset = 0; offset < num_ways; offset++) {
             // Read file into list of integers
             List<Integer> lines = readFileIntoList(Paths.get("data", "input.txt"), offset, memory_cap).stream().map(Integer::parseInt).collect(Collectors.toList());
-            System.out.println("Input file: " + lines.size());
-            total_lines += lines.size();
 
             // Sort the list of integers
             int[] inputArray = lines.stream().mapToInt(Integer::intValue).toArray();
-            mergeSort(inputArray);
+            MergeSort.mergeSort(inputArray);
 
             // Write sorted list to file
             try (Formatter formatter = new Formatter(Files.newBufferedWriter(Paths.get("data", String.format("output_%d.txt", offset + 1))))) {
@@ -164,9 +135,7 @@ public class ExternalSorting {
             System.gc();
         }
 
-
         mergeFiles(Paths.get("data", "output.txt"), memory_cap, num_ways, total_lines);
-
-
+        removeTempFiles(Paths.get("data"), num_ways);
     }
 }
